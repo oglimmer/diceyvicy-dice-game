@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diceyvicy Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="container">
+        <!-- Start Screen -->
+        <div id="start-screen">
+            <h1>Diceyvicy</h1>
+            <div class="start-form">
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="50">
+                <button id="startButton" class="start-btn">Start Game</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" style="display: none;">
+            <div id="game-header">
+                <h2>Diceyvicy Game</h2>
+                <div id="game-info">
+                    <span id="currentPlayerDisplay">Current Player: <span id="currentPlayer"></span></span>
+                    <span id="rollCountDisplay">Rolls left: <span id="rollsLeft">2</span></span>
+                </div>
+                <div id="ai-action-display" style="display: none;">
+                    <div id="ai-action-text"></div>
+                </div>
+            </div>
+            
+            <div id="game-content">
+                <div id="dice-area">
+                    <div id="dice-container">
+                        <div class="dice" data-index="0">
+                            <div class="dice-face">1</div>
+                            <input type="checkbox" class="dice-keep" style="display: none;">
+                        </div>
+                        <div class="dice" data-index="1">
+                            <div class="dice-face">1</div>
+                            <input type="checkbox" class="dice-keep" style="display: none;">
+                        </div>
+                        <div class="dice" data-index="2">
+                            <div class="dice-face">1</div>
+                            <input type="checkbox" class="dice-keep" style="display: none;">
+                        </div>
+                        <div class="dice" data-index="3">
+                            <div class="dice-face">1</div>
+                            <input type="checkbox" class="dice-keep" style="display: none;">
+                        </div>
+                        <div class="dice" data-index="4">
+                            <div class="dice-face">1</div>
+                            <input type="checkbox" class="dice-keep" style="display: none;">
+                        </div>
+                    </div>
+                    <button id="rollButton" class="roll-btn">Roll Dice</button>
+                </div>
+                
+                <div id="scorecard">
+                    <h3>Scorecard</h3>
+                    <div id="scorecard-content">
+                        <div class="score-section">
+                            <h4>Upper Section</h4>
+                            <div class="score-row" data-booking="ONES">
+                                <span>Ones</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="TWOS">
+                                <span>Twos</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="THREES">
+                                <span>Threes</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="FOURS">
+                                <span>Fours</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="FIVES">
+                                <span>Fives</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="SIXES">
+                                <span>Sixes</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                        </div>
+                        
+                        <div class="score-section">
+                            <h4>Lower Section</h4>
+                            <div class="score-row" data-booking="THREE_OF_A_KIND">
+                                <span>Three of a Kind</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="FOUR_OF_A_KIND">
+                                <span>Four of a Kind</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="FULL_HOUSE">
+                                <span>Full House</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="SMALL_STRAIGHT">
+                                <span>Small Straight</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="LARGE_STRAIGHT">
+                                <span>Large Straight</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="KNIFFEL">
+                                <span>Diceyvicy (5 of a kind)</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                            <div class="score-row" data-booking="CHANCE">
+                                <span>Chance</span>
+                                <span class="score-value">-</span>
+                                <button class="book-btn">Book</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="players-scores">
+                        <div class="player-score">
+                            <h4 id="player-name"></h4>
+                            <div id="player-total">Total: 0</div>
+                        </div>
+                        <div class="player-score">
+                            <h4>Jürgen-AI</h4>
+                            <div id="ai-total">Total: 0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" style="display: none;">
+            <h2>Game Over!</h2>
+            <div id="final-scores"></div>
+            <button id="newGameButton" class="start-btn">New Game</button>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

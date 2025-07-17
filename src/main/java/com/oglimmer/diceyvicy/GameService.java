@@ -1,0 +1,132 @@
+package com.oglimmer.diceyvicy;
+
+import com.oglimmer.kniffel.model.BookingType;
+import com.oglimmer.kniffel.model.KniffelPlayer;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+@Service
+@AllArgsConstructor
+@Slf4j
+public class GameService {
+
+    private final AiBot aiBot;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final Map<String, GameState> gameStates = new ConcurrentHashMap<>();
+
+    public GameState startNewGame(String playerName) {
+        GameState gameState = new GameState();
+        gameState.initializeGame(playerName);
+        gameStates.put(gameState.getGameId(), gameState);
+        log.info("Started new game with ID: {} with current player: {}", gameState.getGameId(), gameState.getCurrentPlayer().getName());
+        return gameState;
+    }
+
+    public void handlePlayerReroll(String gameId, int[] diceToKeep) {
+        GameState gameState = gameStates.get(gameId);
+        if (gameState == null) {
+            log.error("Game not found: {}", gameId);
+            return;
+        }
+
+        if (gameState.getRollCount() >= 3) {
+            log.error("Cannot reroll, already rolled 2 times for game: {}", gameId);
+            return;
+        }
+
+        gameState.rerollDice(diceToKeep);
+        log.info("Player rerolled dice for game: {}, roll count: {}", gameId, gameState.getRollCount());
+        broadcastGameState(gameId, gameState);
+    }
+
+    public void handlePlayerBook(String gameId, BookingType bookingType) {
+        GameState gameState = gameStates.get(gameId);
+        if (gameState == null) {
+            log.error("Game not found: {}", gameId);
+            return;
+        }
+
+        if (gameState.getCurrentPlayer().getUsedBookingTypes().contains(bookingType)) {
+            log.error("Booking type {} already used for game: {}", bookingType, gameId);
+            return;
+        }
+
+        gameState.bookDiceRoll(bookingType);
+        log.info("Player booked dice roll for game: {} with booking type: {}", gameId, bookingType);
+        broadcastGameState(gameId, gameState);
+
+        // Check if AI's turn
+        if (!gameState.isGameOver() && gameState.getCurrentPlayer().getName().equals("Jürgen-AI")) {
+            handleAiTurn(gameId, gameState);
+        }
+    }
+
+    private void handleAiTurn(String gameId, GameState gameState) {
+        // AI reroll logic
+        KniffelPlayer currentPlayer = gameState.getCurrentPlayer();
+        broadcastGameStateWithAction(gameId, gameState, "Jürgen is thinking...");
+        while (gameState.getRollCount() < 3) {
+            int[] diceToKeep = aiBot.askAiWhichDiceToKeep(
+                    gameState.getDiceRolls(),
+                    currentPlayer.getUsedBookingTypes(),
+                    gameState.getRollCount()
+            );
+
+            log.info("{} will reroll dice for game: {}, current dice: {}, keeping: {}", currentPlayer.getName(), gameId, gameState.getDiceRolls(), diceToKeep);
+            gameState.rerollDice(diceToKeep);
+
+            List<Integer> diceValues = gameState.getDiceRolls();
+
+            String aiAction = String.format("Jürgen rerolled dice: [%s], kept dice: %s",
+                    diceValues.stream().map(String::valueOf).collect(Collectors.joining(", ")),
+                    Arrays.toString(diceToKeep));
+            broadcastGameStateWithAction(gameId, gameState, aiAction);
+
+            // Add delay for better UX
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        // AI book
+        BookingType bookingType = aiBot.askAiBookingType(
+                gameState.getDiceRolls(),
+                currentPlayer.getUsedBookingTypes()
+        );
+
+        int previousScore = currentPlayer.getScore();
+        String finalDiceRoll = gameState.getDiceRolls().stream().map(String::valueOf).collect(Collectors.joining(", "));
+        gameState.bookDiceRoll(bookingType);
+        int newScore = currentPlayer.getScore();
+        int scoreGained = newScore - previousScore;
+
+        log.info("{} booked dice roll for game: {} with booking type: {} on dice: {}", currentPlayer.getName(), gameId, bookingType, finalDiceRoll);
+
+        String aiAction = String.format("Jürgen booked %s for %d points with dice: [%s] - It's your turn now!",
+                bookingType.toString().replace("_", " "),
+                scoreGained,
+                finalDiceRoll);
+        broadcastGameStateWithAction(gameId, gameState, aiAction);
+    }
+
+    private void broadcastGameState(String gameId, GameState gameState) {
+        broadcastGameStateWithAction(gameId, gameState, null);
+    }
+
+    private void broadcastGameStateWithAction(String gameId, GameState gameState, String aiAction) {
+        log.debug("Broadcasting game state for game: {}, action: {}", gameId, aiAction);
+        GameController.GameResponse response = GameController.GameResponse.fromGameState(gameState);
+        response.setAiAction(aiAction);
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, response);
+    }
+}

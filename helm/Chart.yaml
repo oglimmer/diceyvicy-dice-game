@@ -1,0 +1,15 @@
+apiVersion: v2
+name: diceyvicy
+description: A Helm chart for Diceyvicy AI Spring Boot application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - spring-boot
+  - diceyvicy
+  - ai
+  - game
+maintainers:
+  - name: Team
+sources:
+  - https://github.com/oglimmer/diceyvicy

@@ -1,0 +1,107 @@
+global:
+  imageRegistry: registry.oglimmer.com
+
+replicaCount: 1
+
+image:
+  repository: diceyvicy
+  pullPolicy: Always
+  tag: latest
+
+imagePullSecrets:
+  - name: oglimmerregistrykey
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 10001
+  runAsUser: 10001
+  runAsGroup: 10001
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    cert-manager.io/cluster-issuer: "oglimmer-com-dns"
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: diceyvicy.oglimmer.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    enabled: true
+    secretName: "tls-diceyvicy-ingress-dns"
+    hosts:
+      - "diceyvicy.oglimmer.com"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 300
+  periodSeconds: 30
+  timeoutSeconds: 60
+  failureThreshold: 10
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 15
+  timeoutSeconds: 10
+  failureThreshold: 6
+
+env: {}
+
+openaiApiKey:
+  secretName: "diceyvicy-openai-secret"
+  key: "OPENAI_API_KEY"
+  value: ""
+
+sealedSecret:
+  enabled: true
