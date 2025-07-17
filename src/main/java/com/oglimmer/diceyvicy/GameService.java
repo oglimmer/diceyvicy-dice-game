@@ -26,11 +26,10 @@ public class GameService {
         GameState gameState = new GameState();
         gameState.initializeGame(playerName);
         gameStates.put(gameState.getGameId(), gameState);
-        log.info("Started new game with ID: {} with current player: {}", gameState.getGameId(), gameState.getCurrentPlayer().getName());
         return gameState;
     }
 
-    public void handlePlayerReroll(String gameId, int[] diceToKeep) {
+    public void handlePlayerReroll(String gameId, int[] dicePositionToKeep) {
         GameState gameState = gameStates.get(gameId);
         if (gameState == null) {
             log.error("Game not found: {}", gameId);
@@ -42,7 +41,7 @@ public class GameService {
             return;
         }
 
-        gameState.rerollDice(diceToKeep);
+        gameState.rerollDiceByPos(dicePositionToKeep);
         log.info("Player rerolled dice for game: {}, roll count: {}", gameId, gameState.getRollCount());
         broadcastGameState(gameId, gameState);
     }
@@ -72,7 +71,7 @@ public class GameService {
     private void handleAiTurn(String gameId, GameState gameState) {
         // AI reroll logic
         KniffelPlayer currentPlayer = gameState.getCurrentPlayer();
-        broadcastGameStateWithAction(gameId, gameState, "Jürgen is thinking...");
+        broadcastGameStateWithAction(gameId, gameState, "Jürgen is thinking about " + gameState.getDiceRolls() + "...");
         while (gameState.getRollCount() < 3) {
             int[] diceToKeep = aiBot.askAiWhichDiceToKeep(
                     gameState.getDiceRolls(),
@@ -81,13 +80,11 @@ public class GameService {
             );
 
             log.info("{} will reroll dice for game: {}, current dice: {}, keeping: {}", currentPlayer.getName(), gameId, gameState.getDiceRolls(), diceToKeep);
-            gameState.rerollDice(diceToKeep);
+            gameState.rerollDiceByVal(diceToKeep);
 
-            List<Integer> diceValues = gameState.getDiceRolls();
-
-            String aiAction = String.format("Jürgen rerolled dice: [%s], kept dice: %s",
-                    diceValues.stream().map(String::valueOf).collect(Collectors.joining(", ")),
-                    Arrays.toString(diceToKeep));
+            String aiAction = String.format("Jürgen kept dice: %s and now has %s",
+                    Arrays.toString(diceToKeep),
+                    gameState.getDiceRolls().stream().map(String::valueOf).collect(Collectors.joining(", ")));
             broadcastGameStateWithAction(gameId, gameState, aiAction);
 
             // Add delay for better UX

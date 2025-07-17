@@ -41,9 +41,16 @@ public class GameState {
         return game.getRollRound();
     }
 
-    public void rerollDice(int[] diceToKeep) {
-        log.info("Player {} rerolled dice, dice to keep: {}, current dice: {}", getCurrentPlayer().getName(), diceToKeep, game.getDiceRolls());
-        game.reRollDice(filterByPositions(game.getDiceRolls(), diceToKeep));
+    public void rerollDiceByPos(int[] dicePositionToKeep) {
+        int[] diceValueToKeep = filterByPositions(game.getDiceRolls(), dicePositionToKeep);
+        log.info("Player {} rerolled dice, dice to keep: {}, current dice: {}", getCurrentPlayer().getName(), diceValueToKeep, game.getDiceRolls());
+        game.reRollDice(diceValueToKeep);
+        log.info("Player {} after rerolled dice, {}", getCurrentPlayer().getName(), game.getDiceRolls());
+    }
+
+    public void rerollDiceByVal(int[] diceValueToKeep) {
+        log.info("Player {} rerolled dice, dice to keep: {}, current dice: {}", getCurrentPlayer().getName(), diceValueToKeep, game.getDiceRolls());
+        game.reRollDice(diceValueToKeep);
         log.info("Player {} after rerolled dice, {}", getCurrentPlayer().getName(), game.getDiceRolls());
     }
 

@@ -1,5 +1,6 @@
 package com.oglimmer.diceyvicy;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.oglimmer.kniffel.model.BookingType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,13 +21,11 @@ public class GameWebSocketController {
 
     @MessageMapping("/game/{gameId}/reroll")
     public void rerollDice(@DestinationVariable String gameId, @Payload RerollRequest request) {
-        log.info("WebSocket reroll request for gameId: {}, {}", gameId, request);
         gameService.handlePlayerReroll(gameId, request.getDiceToKeep());
     }
 
     @MessageMapping("/game/{gameId}/book")
     public void bookDiceRoll(@DestinationVariable String gameId, @Payload BookRequest request) {
-        log.info("WebSocket book request for gameId: {} with booking type: {}", gameId, request.getBookingType());
         gameService.handlePlayerBook(gameId, request.getBookingType());
     }
 
@@ -34,6 +33,7 @@ public class GameWebSocketController {
     @Setter
     @ToString
     public static class RerollRequest {
+        @JsonPropertyDescription("The positions dice to keep. This is 1-based positions in the array.")
         private int[] diceToKeep;
     }
 
