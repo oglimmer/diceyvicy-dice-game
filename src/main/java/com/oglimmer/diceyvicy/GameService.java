@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +74,28 @@ public class GameService {
         }
     }
 
+    public static String formatElapsedTime(long milliseconds) {
+        Duration duration = Duration.ofMillis(milliseconds);
+
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+        long millis = duration.toMillisPart();
+
+        StringBuilder sb = new StringBuilder();
+
+        if (days > 0) sb.append(days).append("d ");
+        if (hours > 0) sb.append(hours).append("h ");
+        if (minutes > 0) sb.append(minutes).append("m ");
+        if (seconds > 0) sb.append(seconds).append("s");
+        if (sb.isEmpty()) sb.append(millis).append("ms");
+
+        return sb.toString().trim();
+    }
+
     private void handleAiTurn(String gameId, GameState gameState) {
-        // Get the AI bot for this specific game
+        long time = System.currentTimeMillis();
         AiBot aiBot = gameBots.get(gameId);
         if (aiBot == null) {
             log.error("No AI bot found for game: {}", gameId);
@@ -121,7 +142,9 @@ public class GameService {
 
         log.info("{} booked dice roll for game: {} with booking type: {} on dice: {}", currentPlayer.getName(), gameId, bookingType, finalDiceRoll);
 
-        String aiAction = String.format("Jürgen booked %s for %d points with dice: [%s] - It's your turn now!",
+        long totalTime = System.currentTimeMillis() - time;
+        String aiAction = String.format("Jürgen played for %s and booked %s for %d points with dice: [%s] - It's your turn now!",
+                formatElapsedTime(totalTime),
                 bookingType.toString().replace("_", " "),
                 scoreGained,
                 finalDiceRoll);
