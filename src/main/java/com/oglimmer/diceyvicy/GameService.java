@@ -82,7 +82,7 @@ public class GameService {
             log.info("{} will reroll dice for game: {}, current dice: {}, keeping: {}", currentPlayer.getName(), gameId, gameState.getDiceRolls(), diceToKeep);
             gameState.rerollDiceByVal(diceToKeep);
 
-            String aiAction = String.format("Jürgen kept dice: %s and now has %s",
+            String aiAction = String.format("Jürgen kept dice: %s and re-rolled to %s - thinking again...",
                     Arrays.toString(diceToKeep),
                     gameState.getDiceRolls().stream().map(String::valueOf).collect(Collectors.joining(", ")));
             broadcastGameStateWithAction(gameId, gameState, aiAction);

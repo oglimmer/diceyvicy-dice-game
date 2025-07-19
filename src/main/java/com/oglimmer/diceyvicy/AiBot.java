@@ -1,13 +1,8 @@
 package com.oglimmer.diceyvicy;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.oglimmer.kniffel.model.BookingType;
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.models.ChatModel;
-import com.openai.models.chat.completions.ChatCompletion;
-import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oglimmer.kniffel.model.BookingType;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,18 +10,12 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 @Slf4j
 @Component
 public class AiBot {
 
-    private final OpenAIClient client;
-
-    public AiBot() {
-        String openaiApiKey = System.getProperty("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"));
-        this.client = OpenAIOkHttpClient.builder()
-                .apiKey(openaiApiKey)
-                .build();
-    }
+    private final AiModel aiModel = new AiModel4OMini();
 
     @ToString
     public static class BookingSelection {
@@ -55,25 +44,8 @@ public class AiBot {
             String userPrompt = String.format("Dice rolls: %s\nAvailable booking types: %s\nWhich booking type should I choose?",
                     diceRolls, String.join(", ", availableTypeNames));
 
-            System.out.println("************************************************");
-            System.out.println(systemPrompt);
-            System.out.println(userPrompt);
-            System.out.println("************************************************");
 
-            ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
-                    .model("ft:gpt-3.5-turbo-0125:personal::BuP2JgWv")
-                    .addSystemMessage(systemPrompt)
-                    .addUserMessage(userPrompt)
-                    .maxCompletionTokens(200)
-                    .temperature(0.1)
-                    .build();
-
-            ChatCompletion chatCompletion = client.chat().completions().create(params);
-            if (chatCompletion.choices().size() != 1) {
-                log.error("Unexpected number of choices returned: {}", chatCompletion.choices().size());
-                return Arrays.stream(BookingType.values()).filter(bt -> !usedBookingTypes.contains(bt)).findFirst().orElseThrow();
-            }
-            String responseText = chatCompletion.choices().getFirst().message().content().orElse(null);
+            String responseText = aiModel.askModel(systemPrompt, userPrompt, bt -> !usedBookingTypes.contains(bt));
 
             ObjectMapper mapper = new ObjectMapper();
             BookingSelection selection = null;
@@ -134,20 +106,7 @@ public class AiBot {
             String userPrompt = String.format("You will be able to re-roll the dice %s. Your current dice: %s \nAvailable booking types: %s\nWhich dice should I keep and remember to list all dice to keep one by one? Do not list dice which are not in your current dice roll.",
                     round == 0 ? "twice" : (round == 1 ? " once" : null), diceRolls, availableTypes);
 
-            ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
-                    .model("ft:gpt-3.5-turbo-0125:personal::BuP2JgWv")
-                    .addSystemMessage(systemPrompt)
-                    .addUserMessage(userPrompt)
-                    .maxCompletionTokens(200)
-                    .temperature(0.1)
-                    .build();
-
-            ChatCompletion chatCompletion = client.chat().completions().create(params);
-            if (chatCompletion.choices().size() != 1) {
-                log.error("Unexpected number of choices returned: {}", chatCompletion.choices().size());
-                return new int[0];
-            }
-            String responseText = chatCompletion.choices().getFirst().message().content().orElse(null);
+            String responseText = aiModel.askModel(systemPrompt, userPrompt, null);
 
             ObjectMapper mapper = new ObjectMapper();
             DiceSelection selection = null;
