@@ -128,7 +128,7 @@ public class AiBot {
                     Where diceToKeep is an array of dice values to keep (empty array if none) and reasoning explains your choice.""";
 
             String userPrompt = String.format("You will be able to re-roll the dice %s. Your current dice: %s \nAvailable booking types: %s\nWhich dice should I keep and remember to list all dice to keep one by one? Do not list dice which are not in your current dice roll.",
-                    round == 0 ? "twice" : (round == 1 ? " once" : null), diceRolls, availableTypes);
+                    round == 1 ? "twice" : (round == 2 ? " once" : null), diceRolls, availableTypes);
 
             String responseText = aiModel.askModel(systemPrompt, userPrompt, null);
 
