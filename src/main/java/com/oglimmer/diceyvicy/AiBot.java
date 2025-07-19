@@ -15,7 +15,31 @@ import java.util.stream.Collectors;
 @Component
 public class AiBot {
 
-    private final AiModel aiModel = new AiModel4OMini();
+    private AiModel aiModel;
+
+    public AiBot() {
+        this.aiModel = new AiModel4OMini(); // Default model
+    }
+
+    public AiBot(String modelType) {
+        setAiModel(modelType);
+    }
+
+    public void setAiModel(String modelType) {
+        switch (modelType) {
+            case "4OMini":
+                this.aiModel = new AiModel4OMini();
+                break;
+            case "35TurboFineTuned":
+                this.aiModel = new AiModel35TurboFineTuned();
+                break;
+            default:
+                log.warn("Unknown AI model type: {}, using default 4OMini", modelType);
+                this.aiModel = new AiModel4OMini();
+                break;
+        }
+        log.info("AI model set to: {}", modelType);
+    }
 
     @ToString
     public static class BookingSelection {

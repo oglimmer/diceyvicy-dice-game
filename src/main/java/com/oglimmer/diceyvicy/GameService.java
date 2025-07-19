@@ -18,13 +18,18 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GameService {
 
-    private final AiBot aiBot;
     private final SimpMessagingTemplate messagingTemplate;
     private final Map<String, GameState> gameStates = new ConcurrentHashMap<>();
+    private final Map<String, AiBot> gameBots = new ConcurrentHashMap<>();
 
-    public GameState startNewGame(String playerName) {
+    public GameState startNewGame(String playerName, String aiModel) {
         GameState gameState = new GameState();
         gameState.initializeGame(playerName);
+        
+        // Create AI bot with selected model for this game
+        AiBot aiBot = new AiBot(aiModel);
+        gameBots.put(gameState.getGameId(), aiBot);
+        
         gameStates.put(gameState.getGameId(), gameState);
         return gameState;
     }
@@ -69,6 +74,13 @@ public class GameService {
     }
 
     private void handleAiTurn(String gameId, GameState gameState) {
+        // Get the AI bot for this specific game
+        AiBot aiBot = gameBots.get(gameId);
+        if (aiBot == null) {
+            log.error("No AI bot found for game: {}", gameId);
+            return;
+        }
+        
         // AI reroll logic
         KniffelPlayer currentPlayer = gameState.getCurrentPlayer();
         broadcastGameStateWithAction(gameId, gameState, "Jürgen is thinking about " + gameState.getDiceRolls() + "...");
@@ -125,5 +137,16 @@ public class GameService {
         GameController.GameResponse response = GameController.GameResponse.fromGameState(gameState);
         response.setAiAction(aiAction);
         messagingTemplate.convertAndSend("/topic/game/" + gameId, response);
+        
+        // Clean up if game is over
+        if (gameState.isGameOver()) {
+            cleanupGame(gameId);
+        }
+    }
+    
+    private void cleanupGame(String gameId) {
+        gameStates.remove(gameId);
+        gameBots.remove(gameId);
+        log.info("Cleaned up game: {}", gameId);
     }
 }

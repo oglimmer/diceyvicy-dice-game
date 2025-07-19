@@ -25,8 +25,8 @@ public class GameController {
 
     @PostMapping("/start")
     public ResponseEntity<GameResponse> startGame(@RequestBody StartGameRequest request) {
-        log.info("Starting new game for player: {}", request.getPlayerName());
-        GameState gameState = gameService.startNewGame(request.getPlayerName());
+        log.info("Starting new game for player: {} with AI model: {}", request.getPlayerName(), request.getAiModel());
+        GameState gameState = gameService.startNewGame(request.getPlayerName(), request.getAiModel());
         return ResponseEntity.ok(GameResponse.fromGameState(gameState));
     }
 
@@ -34,6 +34,7 @@ public class GameController {
     @Setter
     public static class StartGameRequest {
         private String playerName;
+        private String aiModel;
     }
 
     @Getter

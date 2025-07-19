@@ -66,7 +66,9 @@ class DiceGame {
     
     async startGame() {
         const playerNameInput = document.getElementById('playerName');
+        const aiModelSelect = document.getElementById('aiModel');
         const playerName = playerNameInput.value.trim();
+        const aiModel = aiModelSelect.value;
         
         if (!playerName) {
             alert('Please enter your name');
@@ -84,7 +86,10 @@ class DiceGame {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ playerName: playerName })
+                body: JSON.stringify({ 
+                    playerName: playerName,
+                    aiModel: aiModel 
+                })
             });
             
             if (!response.ok) {
